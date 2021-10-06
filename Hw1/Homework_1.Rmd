@@ -1,0 +1,240 @@
+---
+title: "Homework 1"
+subtitle: "4375 Machine Learning with Dr. Mazidi"
+author: "Cris Chou"
+date: "9/5/2021"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+This homework has two parts:
+
+* Part 1 uses R for data exploration
+* Part 2 uses C++ for data exploration
+
+---
+
+This homework is worth 100 points, 50 points each for Part 1 and Part 2. 
+
+---
+
+# Part 1: RStudio Data Exploration
+
+**Instructions:** Follow the instructions for the 10 parts below. If the step asks you to make an observation or comment, write your answer in the white space above the gray code box for that step. 
+
+## Step 1: Load and explore the data
+
+* load library MASS (install at console, not in code)
+* load the Boston dataframe using data(Boston)
+* use str() on the data
+* type ?Boston at the console
+* Write 2-3 sentences about the data set below
+
+Your commentary here:
+
+The Boston data frame is housing data from census tracts in 1970. Original data was by Harrison. There were 506 census tracts. Boston crime per capita in the first quarter was .08205. The average number of rooms per dwelling in the first quarter was 5.886. 
+
+```{r}
+# step 1 code
+#install.packages(MASS)
+library(MASS)
+Boston <- Boston
+data(Boston)
+str(Boston)
+
+```
+
+## Step 2: More data exploration
+
+Use R commands to:
+
+* display the first few rows
+* display the last two rows
+* display row 5
+* display the first few rows of column 1 by combining head() and using indexing
+* display the column names
+
+```{r}
+# step 2 code
+head(Boston)
+tail(Boston,2)
+Boston[5,]
+head(Boston[1])
+names(Boston)
+
+```
+
+## Step 3: More data exploration
+
+For the crime column, show:
+
+* the mean
+* the median
+* the range
+
+```{r}
+# step 3 code
+mean(Boston$crim)
+median(Boston$crim)
+range(Boston$crim)
+
+```
+
+## Step 4: Data visualization
+
+Create a histogram of the crime column, with an appropriate main heading. In the space below, state your conclusions about the crime variable:
+
+Your commentary here:
+Most crime per capita in Boston according to the data is between 0-10. As the crime capita gets higher, the frequency gets smaller showing that most towns have less than 10 crime per capita. 
+
+
+```{r}
+# step 4 code
+hist(Boston$crim, col="slategray", main="Crime per Capita", xlab="Crime per Capita")
+
+```
+
+## Step 5: Finding correlations
+
+Use the cor() function to see if there is a correlation between crime and median home value. In the space below, write a sentence or two on what this value might mean. Also write about whether or not the crime column might be useful to predict median home value.
+
+Your commentary here:
+Because the cor() gives us a number closer to 0 than to -1 or 1, it implies a weaker correlation. This means that the crime column is not the best predictor for the median home value. 
+
+```{r}
+# step 5 code
+cor(Boston$crim, Boston$medv)
+
+```
+
+## Step 6: Finding potential correlations
+
+Create a plot showing the median value on the y axis and number of rooms on the x axis. Create appropriate main, x and y labels, change the point color and style. [Reference for plots(http://www.statmethods.net/advgraphs/parameters.html) 
+
+Use the cor() function to quantify the correlation between these two variables. Write a sentence or two summarizing what the graph and correlation tell you about these 2 variables.
+
+Your commentary here:
+
+Although there are a few outliers, there is a trend that can be seen that the more rooms in a house, the higher the median value of the homes. cor() confirms this giving a .6953599 which is closer to 1 than 0, implying a stronger correlation.  
+
+```{r}
+# step 6 code
+plot(Boston$rm,Boston$medv, pch=16, col="purple", cex =1.5, main="Boston",xlab="Average Room per Dwelling", ylab="Median Value of Home($1000s)")
+cor(Boston$rm,Boston$medv)
+
+```
+
+## Step 7: Evaluating potential predictors
+
+Use R functions to determine if variable chas is a factor. Plot median value on the y axis and chas on the x axis. Make chas a factor and plot again.
+
+Comment on the difference in meaning of the two graphs. Look back the description of the Boston data set you got with the ?Boston command to interpret the meaning of 0 and 1.  
+
+Your commentary here:
+The first graph shows the frequency of both chas variables as a function of the median value of homes. However the second graph shows better the concentration of median value of homes on homes that are on the river and homes that are not on the river. 0 means that the house is not on the river and 1 means that the house is on the river. 
+
+
+```{r}
+# step 7 code
+df <- Boston
+#plotted not as a factor
+plot(Boston$chas,Boston$medv)
+
+#plotted as a factor
+#install.packages("vioplot")
+#library(vioplot)
+#x1 <- Boston$medv[Boston$chas==0]
+#x2 <- Boston$medv[Boston$chas==1]
+#vioplot(x1,x2,col="wheat", names=c("Not on river","Bounds River"))
+df$chas[df$chas==1] <- TRUE
+df$chas <- factor(Boston$chas)
+plot(df$chas,df$medv,names=c("Not on river","Bounds River"),xlab ="",ylab ="Median Price of Homes($1000s")
+```
+
+## Step 8: Evaluating potential predictors
+
+Explore the rad variable. What kind of variable is rad? What information do you get about this variable with the summary() function? Does the unique() function give you additional information? Use the sum() function to determine how many neighborhoods have rad equal to 24. Use R code to determine what percentage this is of the neighborhoods.
+
+Your commentary here:
+The rad variable is a variable that shows the accessibility to radial highways. The higher the index value is, the better the accessibility is. With the summary function we get the min, the 1st quarter, the median, the mean, the 3rd quarter, and the max values. The unique lets us see all the unique values, and by using it we see that the scale is from 1-8 and 24. 
+
+```{r}
+# step 8 code
+summary(Boston$rad)
+unique(Boston$rad)
+radSum <- sum(Boston$rad>=24)
+radSum / (506 * 14) 
+
+```
+
+## Step 9: Adding a new potential predictor
+
+Create a new variable called “far” using the ifelse() function that is TRUE if rad is 24 and FALSE otherwise. Make the variable a factor. Plot far and medv. What does the graph tell you? 
+
+Your commentary here:
+It shows that higher median home values have less access to highways. Maybe this is due to higher value homes being in  
+
+
+```{r}
+# step 9 code
+far <- ifelse(Boston$rad==24,TRUE,FALSE)
+far <- factor(far)
+plot(far,Boston$medv,names=c("Not 24 Rad", "24 Rad"),xlab ="",ylab ="Median Home Value($1000s)")
+
+```
+
+## Step 10: Data exploration
+
+* Create a summary of Boston just for columns 1, 6, 13 and 14 (crim, rm, lstat, medv)
+* Use the which.max() function to find the neighborhood with the highest median value. See p. 176 in the pdf
+* Display that row from the data set, but only columns 1, 6, 13 and 14
+* Write a few sentences comparing this neighborhood and the city as a whole in terms of: crime, number of rooms, lower economic percent, median value.
+
+Your commentary here:
+In terms of crime the crime value is much lower than the mean which is 3.61352 compared to this towns 1.46336. In fact everything is better on average. The rooms per dwelling is higher than the mean, the lstat is lower and the median home value is more than double the average of the city (50 to 22.53). 
+
+
+```{r}
+# step 10 code
+summary(df[,c(1,6,13,14)])
+maxMedian <- which.max(df$medv)
+print(df[maxMedian,c(1,6,13,14)])
+
+```
+
+# Part 2: C++
+
+In this course we will get some experience writing machine learning algorithms from scratch in C++, and comparing performance to R. Part 2 of Homework 1 is designed to lay the foundation for writing custom machine learning algorithms in C++. 
+	
+To complete Part 2, first you will read in the Boston.csv file which just contains columns rm and medv. 
+	
+--- 
+
+In the C++ IDE of your choice:
+	
+1	Read the csv file (now reduced to 2 columns) into 2 vectors of the appropriate type.
+
+2	Write the following functions: 
+
+*	a function to find the sum of a numeric vector
+
+*	a function to find the mean of a numeric vector
+
+*	a function to find the median of a numeric vector
+
+*	a function to find the range of a numeric vector
+
+*	a function to compute covariance between rm and medv (see formula on p. 74 of pdf)
+
+*	a function to compute correlation between rm and medv (see formula on p. 74 of pdf); Hint: sigma of a vector can be calculated as the square root of variance(v, v)
+
+3	Call the functions described in a-d for rm and for medv. Call the covariance and correlation functions. Print results for each function.
+
+
+
+
+
+
+
