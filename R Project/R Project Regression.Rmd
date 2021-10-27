@@ -1,0 +1,207 @@
+---
+title: "R Project Regression"
+name: Cris Chou
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+Opening the data
+
+```{r}
+df <- read.csv("Levels_Fyi_Salary_Data.csv")
+names(df)
+head(df)
+#link for dataset https://www.kaggle.com/jackogozaly/data-science-and-stem-salaries
+
+```
+
+Cleaning the data: 
+I removed the races columns because they were redundant since there was another column which simply had a race value. I also removed other columns such as rows since I decided to use only companies from FAANG, and most of which have headquarters in selective areas (Silicon Valley and Seattle for Microsoft)
+
+```{r}
+library(dplyr)
+
+#get rid of non necessary columns
+df <- df %>%
+mutate(timestamp = NULL)
+df <- df %>%
+mutate(Race_Asian = NULL)
+df <- df %>%
+mutate(Race_White = NULL)
+df <- df %>%
+mutate(Race_Two_Or_More = NULL)
+df <- df %>%
+mutate(Race_Black = NULL)
+df <- df %>%
+mutate(Race_Hispanic = NULL)
+df <- df %>%
+mutate(Masters_Degree = NULL)
+df <- df %>%
+mutate(Bachelors_Degree = NULL)
+df <- df %>%
+mutate(Doctorate_Degree = NULL)
+df <- df %>%
+mutate(Highschool = NULL)
+df <- df %>%
+mutate(Some_College = NULL)
+df <- df %>%
+mutate(otherdetails = NULL)
+df <- df %>%
+mutate(dmaid = NULL)
+df <- df %>%
+mutate(level = NULL)
+df <- df %>%
+mutate(title = NULL)
+df <- df %>%
+mutate(tag = NULL)
+df <- df %>%
+mutate(rowNumber = NULL)
+df <- df %>%
+mutate(cityid = NULL)
+df <- df %>%
+mutate(location = NULL)
+
+sapply(df, function(x) sum(is.na(x)==TRUE))
+
+
+#remove any row with NA
+df1 <- na.omit(df)
+#data then becomes only 20k rows which is too much removed
+
+#dataset only including the FAANG companies
+df2 <- df[which(df$company == "Facebook" | df$company=="Apple"| df$company=="Amazon"| df$company=="Netflix"| df$company=="Google"| df$company=="Microsoft" ),]
+
+#FAANG With NAs all omitted (most filtered dataset)
+df3 <- na.omit(df2)
+
+df3$company <- as.factor(df3$company)
+df3$company <- as.factor(df3$company)
+df3$Race <- as.factor(df3$Race)
+df3$Race <- as.factor(df3$Race)
+df3$gender <- as.factor(df3$gender)
+df3$gender <- as.factor(df3$gender)
+df3$Education <- as.factor(df3$Education)
+df3$Education <- as.factor(df3$Education)
+
+```
+
+
+
+Data Exploration: From the graphs we can see that there is actually a little cluster around the beginning of the graphs, showing that many of those who work at FAANG usually have not worked there for an extremely long time. the target was the Totalyearlycompensation. We can see that the yearsatcompany and yearsofexperience were good predictors for total yearly salary. EducationPHD was another good predictor for Totalyearlycompensation. 
+
+```{r}
+
+summary(df3)
+
+library(ggplot2)
+library(scales)
+
+ggplot(df2,aes(x=yearsofexperience,y=totalyearlycompensation))+geom_point()+ scale_y_continuous(labels = label_number(suffix = " K", scale = 1e-4))+labs(x="Years Of Experience",y="Total Yearly Salary($)")
+
+ggplot(df2,aes(x=yearsatcompany,y=totalyearlycompensation))+geom_point()+ scale_y_continuous(labels = label_number(suffix = " K", scale = 1e-4))+labs(x="Years at Company",y="Total Yearly Salary($)")
+
+```
+
+Linear Regression
+
+```{r}
+set.seed(1234)
+i <- sample(1:nrow(df3),nrow(df3)*.75,replace=FALSE)
+train <- df3[i,]
+test <- df3[-i,]
+
+lm1 <- lm(totalyearlycompensation~. , data=train)
+summary(lm1)
+predLin <- predict(lm1,newdata=test)
+corr <- cor(predLin,test$totalyearlycompensation)
+cat("The correlation is  ",corr)
+
+```
+
+kNN
+
+```{r}
+library(caret)
+train$company <- as.integer(train$company)
+test$company <- as.integer(test$company)
+train$Race <- as.integer(train$Race)
+test$Race <- as.integer(test$Race)
+train$gender <- as.integer(train$gender)
+test$gender <- as.integer(test$gender)
+train$Education <- as.integer(train$Education)
+test$Education <- as.integer(test$Education)
+
+
+fit <- knnreg(train[,3:10],train[,2],k=2)
+predictions <- predict(fit, test[,3:10])
+
+corr2 <- cor(predictions, test$totalyearlycompensation)
+mse <- mean((predictions - test$totalyearlycompensation)^2)
+
+cat("The correlation for kNN was ", corr2)
+
+```
+
+Result Analysis:
+The best performing algorithm was the kNN for this dataset. The linear regression had a significantly lower accuracy than the kNN for this dataset. This is likely due to the linear regression assuming that the relationship would be linear. However salaries are not linear and have a variety of factors that influence them. This is why kNN was a much better predictor, because it was able to check the neighbors and see how far off they were. From this data we were able to learn that yearsofexperience, yearsatcompany, and EducationPHD were all very indicitive of what the totalyearly compensation would be. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,130 @@
+---
+title: "R Project Classification"
+name: Cris Chou
+output:
+  pdf_document: default
+  html_notebook: default
+---
+
+Reading data
+
+```{r}
+df <- read.csv("fedex.csv")
+#making data frame smaller since original is 3.6 million rows (selecting 50,000 rows randomly)
+df1 <- df[sample(nrow(df), 50000), ]
+
+#https://www.kaggle.com/manishtripathi86/fedex-data
+#We are predicing wheter the shipment was delayed or not (0 being not delayed, 1 being delayed)
+
+#summary(df)
+
+
+```
+
+
+Data Exploration: 
+We see that shipment delay has a large impact on whether it was delayed. The residuals are not as random as we would like and have a flat pattern.  
+
+
+
+
+
+```{r}
+#sapply(df1, function(x) sum(is.na(x)==TRUE))
+#dataframe for all nas omitted, omitted them instead of using median/mean because the target(delivery status) missing meant that that it would be harder to replace. Also since the dataframe is large, there is ample data to make up for replacing Nas. 
+dfOmit <- na.omit(df1)
+
+dfOmit$Delivery_Status <- factor(dfOmit$Delivery_Status)
+dfOmit$Carrier_Name <- factor(dfOmit$Carrier_Name)
+dfOmit$Source <- factor(dfOmit$Source)
+dfOmit$Destination <- factor(dfOmit$Destination)
+#get rid of year column because all are in 2008
+library(dplyr)
+dfOmit <- dfOmit %>%
+mutate(Year = NULL)
+
+dfOmit$Carrier_Name <- as.integer(as.factor(dfOmit$Carrier_Name))
+dfOmit$Source <- as.integer(as.factor(dfOmit$Source))
+dfOmit$Destination <- as.integer(as.factor(dfOmit$Destination))
+
+
+set.seed(1234)
+#i <- sample(1:nrow(dfOmit)*0.75,replace=FALSE)
+#train <- dfOmit[i,]
+#test <- dfOmit[-i,]
+
+ind <- sample(2,nrow(dfOmit),replace=TRUE,prob =c(.75,.25))
+train <- dfOmit[ind==1,1:14]
+test <- dfOmit[ind==2, 1:14]
+trainLabels <- dfOmit[ind==1,14]
+testLabels <- dfOmit[ind==2,14]
+
+
+#sapply(lapply(dfOmit, unique), length)
+```
+
+Logistic Regression
+
+```{R}
+glm1 <- glm(Delivery_Status~Carrier_Name+Carrier_Num+Shipment_Delay+Month+DayofMonth+DayOfWeek+Shipment_Delay,data = train, family = "binomial")
+summary(glm1)
+
+
+library(ROCR)
+library(caret)
+
+pred <- predict(glm1, newdata=test, type = "response")
+
+pr <- ifelse(pred > 1.5, 2, 1)
+prMatrix <- ifelse(pred > 1.5,1,0)#prediction for matrix
+acc1 <- mean(pr==as.integer(test$Delivery_Status))
+print(paste("glm1 accuracy = ",acc1))
+
+confusionMatrix(as.factor(prMatrix),test$Delivery_Status,positive="0")
+plot(dfOmit$Shipment_Delay~dfOmit$Delivery_Status,xlab = "Delivery Status", ylab = "Shipment Delay" )
+
+par(mfrow=c(2,2))
+plot(glm1)
+
+```
+
+kNN
+
+```{r}
+
+library(class)
+
+#trainLabels <- as.integer(trainLabels)
+#testLabels <- as.integer(testLabels)
+
+
+predKnn <- knn(train = train, test = test, cl = trainLabels, k = 5)
+results1 <- predKnn == testLabels
+acc2 <- length(which(results1==TRUE)) / length(results1)
+cat("The accuracy was ", acc2)
+
+
+```
+
+
+
+
+SVM
+
+```{r}
+library(e1071)
+
+svm1 <- svm(Delivery_Status~Carrier_Name+Carrier_Num+Shipment_Delay+Month+DayofMonth+DayOfWeek+Shipment_Delay+Distance, data=train, kernel="linear",
+cost=10, scale=TRUE)
+pred2 <- predict(svm1, newdata=test)
+table(pred2, test$Delivery_Status)
+mean(pred2==test$Delivery_Status)
+
+```
+
+Result Analysis: The best performing algorithm was the SVM, then kNN, and lastly logistic regression. k = 5 gave the best accuracy for the kNN model. From the big picture we can see that Shipment_Delay was one of the best predictors for predicting whether a shipment would be delayed or not.  
+
+
+
+
+
