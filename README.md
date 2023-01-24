@@ -3,4 +3,4 @@
 #Cris Chou
 
 ## HW2
-[Report](/Hw2/Homework_2.html)
+[Report](https://htmlpreview.github.io/?https://github.com/crischou/CS4375Hw/Hw2/Homework_2.html)
